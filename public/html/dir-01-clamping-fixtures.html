@@ -241,6 +241,26 @@ body.pdf-export .pdf-root{
 .pdf-metrics div{border-top:1px solid #242424;padding-top:8px}
 .pdf-metrics b{display:block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#b8ff3e;font-weight:400}
 .pdf-metrics span{font-size:12px;color:#8a8680}
+.pdf-speaker{
+  margin-top:16px;padding:14px 16px 14px 18px;
+  border:1px solid rgba(184,255,62,.22);
+  border-left:3px solid #b8ff3e;
+  background:linear-gradient(135deg,rgba(184,255,62,.07),rgba(5,5,5,.82) 42%,rgba(5,5,5,.9));
+  backdrop-filter:blur(10px);
+  max-width:72ch;
+}
+.pdf-speaker-label{
+  font-family:ui-monospace,Menlo,Consolas,monospace;
+  font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+  color:#b8ff3e;margin:0 0 8px;
+}
+.pdf-speaker-text{
+  margin:0;font-size:clamp(.92rem,1.15vw,1.05rem);line-height:1.45;
+  color:#c8c4bb;font-weight:400;
+}
+.pdf-page-inner.has-speaker{justify-content:space-between;gap:12px}
+.pdf-page-main{min-height:0;flex:1 1 auto;display:flex;flex-direction:column;justify-content:center}
+.pdf-page.has-speaker .pdf-media img{max-height:min(38vh,340px)}
 @media print{
   .pdf-toolbar{display:none !important}
   html.pdf-export,body.pdf-export{overflow:visible !important;height:auto !important}
@@ -252,6 +272,8 @@ body.pdf-export .pdf-root{
   }
   .pdf-page-inner{width:90%;max-height:88vh}
   .pdf-media img{max-height:48vh}
+  .pdf-page.has-speaker .pdf-media img{max-height:min(36vh,320px)}
+  .pdf-speaker{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   @page{size:A4 landscape;margin:0}
 }
 /* Type windows — top rail, full width, compact */
@@ -1866,6 +1888,20 @@ function pdfTitleHtml(lines) {
   }).join("");
 }
 
+function speakerForStep(t, s) {
+  if (s.key === "hook") return t.hook || t.speakerNotes;
+  if (s.key === "pain") return t.pain || t.speakerNotes;
+  if (s.key === "loss") return t.controlLoss || t.speakerNotes;
+  if (s.key === "fix") return t.engineeringSolution || t.speakerNotes;
+  if (s.key === "benefit") return t.benefit || t.speakerNotes;
+  if (s.kind === "photo") return t.caseImplementation || t.speakerNotes;
+  if (s.kind === "render" || s.kind === "renderAlt") return t.speakerNotes;
+  if (s.kind === "cta") {
+    return "Покажите проблемную операцию. Разберём, где теряется управление — и какой оснасткой вернуть ритм. Пишите: n.zaikovski@icloud.com";
+  }
+  return t.speakerNotes || "";
+}
+
 function buildPdfPage(item, index, total) {
   const t = item.type;
   const s = item.step;
@@ -1874,6 +1910,7 @@ function buildPdfPage(item, index, total) {
   const bg = s.kind === "text" || s.kind === "cta"
     ? resolveStepBackground(t, s.key)
     : (s.kind === "photo" ? t.renderPhoto : (s.kind === "renderAlt" ? t.renderCardAlt : t.renderCard));
+  const speaker = speakerForStep(t, s);
 
   let content = "";
   if (s.kind === "text") {
@@ -1896,12 +1933,22 @@ function buildPdfPage(item, index, total) {
       <div class="pdf-meta" style="margin-top:12px">${label}</div>`;
   }
 
-  return `<section class="pdf-page">
+  const speakerBlock = speaker
+    ? `<aside class="pdf-speaker">
+        <div class="pdf-speaker-label">Speaker · речь</div>
+        <p class="pdf-speaker-text">${speaker}</p>
+      </aside>`
+    : "";
+
+  return `<section class="pdf-page ${speaker ? "has-speaker" : ""}">
     ${bg ? `<div class="pdf-page-bg" style="background-image:url('${bg}')"></div><div class="pdf-page-veil"></div>` : ""}
-    <div class="pdf-page-inner">
-      <p class="pdf-kicker">Metalwork Pulse · DIR-01 · ${t.shortTitle}</p>
-      <p class="pdf-meta">${n} / ${tot} · ${s.slug}</p>
-      ${content}
+    <div class="pdf-page-inner ${speaker ? "has-speaker" : ""}">
+      <div class="pdf-page-main">
+        <p class="pdf-kicker">Metalwork Pulse · DIR-01 · ${t.shortTitle}</p>
+        <p class="pdf-meta">${n} / ${tot} · ${s.slug}</p>
+        ${content}
+      </div>
+      ${speakerBlock}
     </div>
   </section>`;
 }
@@ -1916,7 +1963,7 @@ function openPdfExport() {
   }
   root.innerHTML = `
     <div class="pdf-toolbar">
-      <div class="mono" style="color:#b8ff3e;font-size:11px;letter-spacing:.18em;text-transform:uppercase">PDF · ${list.length} слайдов · без 3D · по центру экрана</div>
+      <div class="mono" style="color:#b8ff3e;font-size:11px;letter-spacing:.18em;text-transform:uppercase">PDF · ${list.length} слайдов · speaker notes · без 3D</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-primary" type="button" id="pdfPrintBtn">Печать / Save PDF</button>
         <button class="btn btn-ghost" type="button" id="pdfCloseBtn">Назад</button>
