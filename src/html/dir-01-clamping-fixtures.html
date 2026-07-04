@@ -603,10 +603,18 @@ body.pdf-export .pdf-root{
 .find-us-inline .find-us-stage canvas{max-height:min(48vh,420px)}
 .find-us-links{position:absolute;inset:0}
 .find-us-links a{
-  position:absolute;display:block;border-radius:2px;
-  /* invisible hit targets over QR */
+  position:absolute;display:block;border-radius:2px;cursor:pointer;
 }
-.find-us-links a:hover{outline:1px solid rgba(184,255,62,.45);outline-offset:2px}
+.find-us-links a:hover{outline:1px solid rgba(184,255,62,.55);outline-offset:2px;background:rgba(184,255,62,.06)}
+.find-us-qr-bar{
+  display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+  padding:10px 12px 12px;background:#0a0a0a;border-top:1px solid var(--rule);
+}
+.find-us-qr-bar a{
+  font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--accent);border:1px solid rgba(184,255,62,.28);padding:8px 10px;text-decoration:none;
+}
+.find-us-qr-bar a:hover{background:rgba(184,255,62,.1);border-color:var(--accent)}
 .find-us-stage.is-loading::after{
   content:"Загрузка…";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint);
@@ -742,13 +750,14 @@ body.pdf-export .pdf-root{
       <button class="btn mono" type="button" data-close="findUsOverlay">ESC · Закрыть</button>
     </div>
   </div>
-  <div class="overlay-body find-us-body">
+  <div class="overlay-body find-us-body" style="flex-direction:column">
     <div class="find-us-stage is-loading" id="findUsStage" aria-label="Как нас найти">
       <div class="find-us-stage-inner">
         <canvas id="findUsCanvas"></canvas>
         <div class="find-us-links" id="findUsLinks"></div>
       </div>
     </div>
+    <div class="find-us-qr-bar" id="findUsQrBar"></div>
   </div>
   <div class="overlay-foot mono" style="font-size:9px;color:var(--ink-faint);justify-content:center">QR кликабельны · PDF без изменений</div>
 </div>
@@ -1228,6 +1237,7 @@ function renderThought() {
             <div class="find-us-links"></div>
           </div>
         </div>
+        <div class="find-us-qr-bar" data-find-us-bar></div>
       </div>
     </div>`;
   }
@@ -1305,6 +1315,12 @@ function selectType(id) {
 }
 
 const FIND_US_PDF = "/media/contact/find-us.pdf";
+const FIND_US_QR = [
+  { url: "https://metalw-site.vercel.app/ru", label: "01 · Сайт" },
+  { url: "https://vizitka-xi.vercel.app/", label: "02 · Производство" },
+  { url: "https://alduduk.vercel.app", label: "03 · КБ" },
+  { url: "https://metalw.ru", label: "04 · Задача / ТЗ" },
+];
 let findUsCache = null;
 let findUsLoadPromise = null;
 
@@ -1345,6 +1361,94 @@ function blackoutPaperMargins(ctx, w, h) {
   ctx.putImageData(img, 0, 0);
 }
 
+/** Detect 4 QR blocks (white modules) L→R and map to FIND_US_QR urls. */
+function detectQrHotspots(ctx, w, h) {
+  const img = ctx.getImageData(0, 0, w, h);
+  const d = img.data;
+  const y0 = Math.floor(h * 0.52);
+  const xMax = Math.floor(w * 0.72);
+  const colScore = new Float64Array(w);
+  const rowScore = new Float64Array(h);
+  for (let y = y0; y < h; y++) {
+    for (let x = 0; x < xMax; x++) {
+      const o = (y * w + x) * 4;
+      if (d[o] > 232 && d[o + 1] > 232 && d[o + 2] > 232) {
+        colScore[x] += 1;
+        rowScore[y] += 1;
+      }
+    }
+  }
+  let yMin = h, yMax = 0;
+  for (let y = y0; y < h; y++) {
+    if (rowScore[y] > 18) {
+      if (y < yMin) yMin = y;
+      if (y > yMax) yMax = y;
+    }
+  }
+  if (yMax <= yMin) return null;
+
+  const active = [];
+  for (let x = 0; x < xMax; x++) {
+    if (colScore[x] > 10) active.push(x);
+  }
+  if (!active.length) return null;
+
+  const groups = [];
+  let s = active[0], prev = active[0];
+  for (let i = 1; i < active.length; i++) {
+    const x = active[i];
+    if (x - prev > 14) {
+      groups.push([s, prev]);
+      s = x;
+    }
+    prev = x;
+  }
+  groups.push([s, prev]);
+
+  // keep 4 widest clusters (QR modules are denser than labels)
+  const ranked = groups
+    .map(([a, b]) => ({ a, b, w: b - a }))
+    .sort((p, q) => q.w - p.w)
+    .slice(0, 4)
+    .sort((p, q) => p.a - q.a);
+  if (ranked.length < 4) return null;
+
+  // pad hit area a bit for labels under QR
+  const padX = w * 0.004;
+  const padY = h * 0.012;
+  const top = Math.max(0, yMin - padY);
+  const bottom = Math.min(h, yMax + padY * 2.2);
+  return ranked.map((g, i) => {
+    const left = Math.max(0, g.a - padX);
+    const right = Math.min(w, g.b + padX);
+    return {
+      url: FIND_US_QR[i].url,
+      label: FIND_US_QR[i].label,
+      left: (left / w) * 100,
+      top: (top / h) * 100,
+      width: ((right - left) / w) * 100,
+      height: ((bottom - top) / h) * 100,
+    };
+  });
+}
+
+function fallbackQrHotspots() {
+  // approximate L→R row if auto-detect fails
+  const base = [
+    { left: 6.2, top: 71.8, width: 11.2, height: 17.5 },
+    { left: 18.4, top: 71.8, width: 11.2, height: 17.5 },
+    { left: 30.6, top: 71.8, width: 11.2, height: 17.5 },
+    { left: 42.8, top: 71.8, width: 11.2, height: 17.5 },
+  ];
+  return base.map((b, i) => ({ ...b, url: FIND_US_QR[i].url, label: FIND_US_QR[i].label }));
+}
+
+function findUsBarHtml() {
+  return FIND_US_QR.map((q) =>
+    `<a href="${q.url}" target="_blank" rel="noopener">${q.label}</a>`
+  ).join("");
+}
+
 async function ensureFindUsRender() {
   if (findUsCache) return findUsCache;
   if (findUsLoadPromise) return findUsLoadPromise;
@@ -1366,23 +1470,7 @@ async function ensureFindUsRender() {
     await page.render({ canvasContext: ctx, viewport }).promise;
     blackoutPaperMargins(ctx, canvas.width, canvas.height);
 
-    const annotations = await page.getAnnotations();
-    const links = annotations
-      .filter((a) => a.subtype === "Link" && (a.url || a.unsafeUrl))
-      .map((a) => {
-        const r = viewport.convertToViewportRectangle(a.rect);
-        const left = Math.min(r[0], r[2]);
-        const top = Math.min(r[1], r[3]);
-        const width = Math.abs(r[2] - r[0]);
-        const height = Math.abs(r[3] - r[1]);
-        return {
-          url: a.url || a.unsafeUrl,
-          left: (left / canvas.width) * 100,
-          top: (top / canvas.height) * 100,
-          width: (width / canvas.width) * 100,
-          height: (height / canvas.height) * 100,
-        };
-      });
+    const links = detectQrHotspots(ctx, canvas.width, canvas.height) || fallbackQrHotspots();
 
     findUsCache = {
       dataUrl: canvas.toDataURL("image/jpeg", 0.92),
@@ -1405,6 +1493,10 @@ async function mountFindUs(stageEl) {
   const data = await ensureFindUsRender();
   const canvas = stageEl.querySelector("canvas");
   const linksEl = stageEl.querySelector(".find-us-links");
+  const bar =
+    document.getElementById("findUsQrBar") ||
+    stageEl.parentElement?.querySelector("[data-find-us-bar], .find-us-qr-bar");
+  if (bar) bar.innerHTML = findUsBarHtml();
   if (!data || !canvas || !linksEl) {
     stageEl.classList.remove("is-loading");
     return;
@@ -1419,7 +1511,7 @@ async function mountFindUs(stageEl) {
   canvas.height = data.height;
   canvas.getContext("2d").drawImage(img, 0, 0);
   linksEl.innerHTML = data.links.map((L) =>
-    `<a href="${L.url}" target="_blank" rel="noopener" style="left:${L.left.toFixed(3)}%;top:${L.top.toFixed(3)}%;width:${L.width.toFixed(3)}%;height:${L.height.toFixed(3)}%" aria-label="Открыть ссылку"></a>`
+    `<a href="${L.url}" target="_blank" rel="noopener" title="${L.label || ""}" aria-label="${L.label || "QR"}" style="left:${L.left.toFixed(3)}%;top:${L.top.toFixed(3)}%;width:${L.width.toFixed(3)}%;height:${L.height.toFixed(3)}%"></a>`
   ).join("");
   stageEl.classList.remove("is-loading");
 }
