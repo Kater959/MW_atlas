@@ -325,58 +325,64 @@ button,a.btn{font:inherit;color:inherit;background:none;border:none;cursor:point
   mix-blend-mode:overlay;
   transition:opacity .05s linear;
 }
-body.is-demo-beat .beat-glitch{opacity:calc(0.15 + var(--beat) * 0.55)}
+body.is-demo-beat .beat-glitch{opacity:calc(0.1 + var(--beat) * 0.35)}
 body.is-demo-beat.is-glitching .beat-glitch{
-  opacity:calc(0.35 + var(--beat) * 0.5);
+  opacity:calc(0.22 + var(--beat) * 0.35);
   box-shadow:
-    inset calc(var(--glitch-rgb) * 2px) 0 0 rgba(120,180,255,.14),
-    inset calc(var(--glitch-rgb) * -2px) 0 0 rgba(255,80,120,.1);
+    inset calc(var(--glitch-rgb) * 1.5px) 0 0 rgba(120,180,255,.1),
+    inset calc(var(--glitch-rgb) * -1.5px) 0 0 rgba(255,80,120,.08);
 }
-body.is-demo-beat .app{
-  transform:
-    scale(var(--beat-scale))
-    translate(var(--glitch-x), var(--glitch-y))
-    skewX(var(--glitch-skew));
-  transform-origin:center center;
-  will-change:transform,filter;
-  filter:
-    brightness(calc(1 + var(--beat) * 0.22))
-    contrast(calc(1 + var(--beat) * 0.08))
-    saturate(calc(1 + var(--beat) * 0.06));
-}
-body.is-demo-beat.is-glitching .app{
-  filter:
-    brightness(calc(1.04 + var(--beat) * 0.24))
-    contrast(calc(1.06 + var(--beat) * 0.1))
-    saturate(calc(1.05 + var(--beat) * 0.08));
-}
+/* Pulse only on media/bg — never scale .app (clips text via overflow:hidden) */
 body.is-demo-beat .left-bg-layer.on{
-  filter:contrast(calc(1.05 + var(--beat) * 0.1)) brightness(calc(1 + var(--beat) * 0.16));
+  transform:scale(calc(1.02 + var(--beat) * 0.03));
+  transform-origin:center center;
+  filter:contrast(calc(1.04 + var(--beat) * 0.08)) brightness(calc(1 + var(--beat) * 0.12));
+  will-change:transform,filter;
 }
 body.is-demo-beat .slide.has-step-bg .slide-bg{
-  filter:contrast(calc(1.04 + var(--beat) * 0.09)) brightness(calc(1 + var(--beat) * 0.14));
+  transform:scale(calc(1 + var(--beat) * 0.03));
+  transform-origin:center center;
+  filter:contrast(calc(1.03 + var(--beat) * 0.07)) brightness(calc(1 + var(--beat) * 0.1));
+  will-change:transform,filter;
+}
+body.is-demo-beat .card-media,
+body.is-demo-beat .model-preview,
+body.is-demo-beat .model-preview-lg{
+  overflow:hidden;
+}
+body.is-demo-beat .card-media img,
+body.is-demo-beat .model-preview model-viewer,
+body.is-demo-beat .model-preview-lg model-viewer{
+  transform:scale(calc(1 + var(--beat) * 0.03));
+  transform-origin:center center;
+  filter:brightness(calc(1 + var(--beat) * 0.08));
 }
 body.is-demo-beat .type-win.active{
-  transform:scale(calc(1 + var(--beat) * 0.055));
+  border-color:color-mix(in srgb, var(--accent) calc(40% + var(--beat) * 40%), var(--rule-strong));
 }
 body.is-demo-beat .hero-title,
 body.is-demo-beat .parallax-title{
   text-shadow:
-    calc(var(--glitch-rgb) * 1px) 0 0 rgba(120,180,255,calc(var(--beat) * 0.35)),
-    calc(var(--glitch-rgb) * -1px) 0 0 rgba(255,90,120,calc(var(--beat) * 0.28));
+    calc(var(--glitch-rgb) * 0.6px) 0 0 rgba(120,180,255,calc(var(--beat) * 0.22)),
+    calc(var(--glitch-rgb) * -0.6px) 0 0 rgba(255,90,120,calc(var(--beat) * 0.18));
 }
-body.is-demo-beat .brand-name{
-  text-shadow:
-    calc(var(--glitch-rgb) * .8px) 0 0 rgba(120,180,255,calc(var(--beat) * 0.25)),
-    calc(var(--glitch-rgb) * -.8px) 0 0 rgba(255,90,120,calc(var(--beat) * 0.2));
+body.is-demo-beat .slide-body,
+body.is-demo-beat .slide-body h2,
+body.is-demo-beat .glass{
+  overflow:visible;
+}
+body.is-demo-beat .slide:not(.is-media){
+  overflow:visible;
 }
 @media (prefers-reduced-motion:reduce){
-  body.is-demo-beat .app{transform:none;filter:none}
-  body.is-demo-beat .type-win.active{transform:none}
+  body.is-demo-beat .left-bg-layer.on,
+  body.is-demo-beat .slide.has-step-bg .slide-bg,
+  body.is-demo-beat .card-media img,
+  body.is-demo-beat .model-preview model-viewer,
+  body.is-demo-beat .model-preview-lg model-viewer{transform:none;filter:none}
   body.is-demo-beat .beat-glitch{display:none}
   body.is-demo-beat .hero-title,
-  body.is-demo-beat .parallax-title,
-  body.is-demo-beat .brand-name{text-shadow:none}
+  body.is-demo-beat .parallax-title{text-shadow:none}
 }
 .header{height:var(--nav-h);display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 28px;border-bottom:1px solid var(--rule);background:var(--header-bg);backdrop-filter:blur(12px);position:sticky;top:0;z-index:20}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
@@ -1749,38 +1755,33 @@ function beatLoop() {
   const pulse = Math.min(1, Math.max(0, beatSmooth));
   const now = performance.now();
 
-  // light glitch on strong onsets
+  // light glitch on strong onsets (overlay only — no layout shift)
   const onset = pulse - beatPrev;
   beatPrev = pulse;
   if (onset > 0.14 && pulse > 0.42) {
-    glitchUntil = now + 55 + Math.random() * 70;
-  } else if (pulse > 0.78 && Math.random() < 0.04) {
-    glitchUntil = now + 40 + Math.random() * 50;
+    glitchUntil = now + 45 + Math.random() * 50;
+  } else if (pulse > 0.78 && Math.random() < 0.03) {
+    glitchUntil = now + 30 + Math.random() * 40;
   }
 
   const glitching = now < glitchUntil;
   document.body.classList.toggle("is-glitching", glitching);
 
-  let gx = 0, gy = 0, skew = 0, rgb = 0, scan = pulse * 0.35;
+  let rgb = 0, scan = pulse * 0.25;
   if (glitching) {
-    const amp = 1.2 + pulse * 2.4;
-    gx = (Math.random() * 2 - 1) * amp;
-    gy = (Math.random() * 2 - 1) * amp * 0.45;
-    skew = (Math.random() * 2 - 1) * (0.15 + pulse * 0.35);
-    rgb = 0.6 + pulse * 1.4;
-    scan = 0.55 + pulse * 0.7;
+    rgb = 0.4 + pulse * 0.9;
+    scan = 0.4 + pulse * 0.5;
   } else if (pulse > 0.55) {
-    // micro jitter on loud parts
-    gx = (Math.random() * 2 - 1) * pulse * 0.35;
-    rgb = pulse * 0.45;
+    rgb = pulse * 0.3;
   }
 
   const root = document.documentElement.style;
   root.setProperty("--beat", pulse.toFixed(3));
-  root.setProperty("--beat-scale", (1 + pulse * 0.072).toFixed(4));
-  root.setProperty("--glitch-x", gx.toFixed(2) + "px");
-  root.setProperty("--glitch-y", gy.toFixed(2) + "px");
-  root.setProperty("--glitch-skew", skew.toFixed(3) + "deg");
+  // backgrounds only — keep modest so media doesn't feel "stretched"
+  root.setProperty("--beat-scale", (1 + pulse * 0.028).toFixed(4));
+  root.setProperty("--glitch-x", "0px");
+  root.setProperty("--glitch-y", "0px");
+  root.setProperty("--glitch-skew", "0deg");
   root.setProperty("--glitch-rgb", rgb.toFixed(2));
   root.setProperty("--glitch-scan", scan.toFixed(2));
   beatRaf = requestAnimationFrame(beatLoop);
