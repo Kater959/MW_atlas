@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function HomePage() {
-  redirect("/atlas");
+  redirect("/html/dir-01-clamping-fixtures.html");
 }
