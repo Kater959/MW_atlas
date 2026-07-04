@@ -241,6 +241,20 @@ body.pdf-export .pdf-root{
 .pdf-metrics div{border-top:1px solid #242424;padding-top:8px}
 .pdf-metrics b{display:block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#b8ff3e;font-weight:400}
 .pdf-metrics span{font-size:12px;color:#8a8680}
+.pdf-speaker{
+  margin-top:14px;padding:12px 14px 12px 16px;
+  border:1px solid rgba(184,255,62,.22);
+  border-left:3px solid #b8ff3e;
+  background:linear-gradient(135deg,rgba(184,255,62,.07),rgba(5,5,5,.82) 42%,rgba(5,5,5,.9));
+  max-width:72ch;
+}
+.pdf-speaker-label{
+  font-family:ui-monospace,Menlo,Consolas,monospace;
+  font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+  color:#b8ff3e;margin:0 0 6px;
+}
+.pdf-speaker-text{margin:0;font-size:clamp(.88rem,1.1vw,1rem);line-height:1.42;color:#c8c4bb}
+.pdf-page.has-speaker .pdf-media img{max-height:min(36vh,320px)}
 @media print{
   .pdf-toolbar{display:none !important}
   html.pdf-export,body.pdf-export{overflow:visible !important;height:auto !important}
@@ -252,6 +266,8 @@ body.pdf-export .pdf-root{
   }
   .pdf-page-inner{width:90%;max-height:88vh}
   .pdf-media img{max-height:48vh}
+  .pdf-page.has-speaker .pdf-media img{max-height:min(34vh,300px)}
+  .pdf-speaker{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   @page{size:A4 landscape;margin:0}
 }
 /* Type windows — top rail, full width, compact */
@@ -562,27 +578,6 @@ body.pdf-export .pdf-root{
 .callouts b{display:block;font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;color:var(--accent);font-weight:400}
 .card-actions,.model-controls{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--rule);flex-wrap:wrap}
 .model-card model-viewer,.model-card .model-preview{width:100%;height:300px;background:var(--canvas-sunk)}
-.speaker-notes{
-  margin-top:18px;padding:12px 14px 12px 16px;max-width:min(52ch,100%);
-  border:1px solid rgba(184,255,62,.2);
-  border-left:3px solid var(--accent);
-  background:linear-gradient(135deg,rgba(184,255,62,.08),rgba(5,5,5,.72) 45%,rgba(5,5,5,.82));
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-}
-.speaker-notes-label{
-  font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
-  color:var(--accent);margin:0 0 6px;
-}
-.speaker-notes-text{
-  margin:0;font-size:13px;line-height:1.45;color:var(--ink-dim);
-}
-.slide.is-media .speaker-notes{
-  margin-top:12px;max-width:min(640px,100%);
-}
-.slide.has-step-bg .speaker-notes{
-  background:linear-gradient(135deg,rgba(184,255,62,.1),rgba(5,5,5,.88) 45%,rgba(5,5,5,.92));
-}
 .cta-thought{margin-top:24px;display:flex;gap:10px;flex-wrap:wrap}
 .slide.is-cta{max-width:min(920px,100%);justify-content:flex-start;padding-top:40px}
 .slide.is-cta .slide-body{max-width:100%;justify-content:flex-start;flex:1;min-height:0}
@@ -1066,21 +1061,17 @@ function resolveStepBackground(t, stepKey) {
 }
 
 function speakerForStep(t, s) {
-  // audience sees title/body; speaker block is the monologue cue
+  if (s.key === "hook") return t.hook || t.speakerNotes || "";
+  if (s.key === "pain") return t.pain || t.speakerNotes || "";
+  if (s.key === "loss") return t.controlLoss || t.speakerNotes || "";
+  if (s.key === "fix") return t.engineeringSolution || t.speakerNotes || "";
+  if (s.key === "benefit") return t.benefit || t.speakerNotes || "";
   if (s.kind === "photo") return t.caseImplementation || t.speakerNotes || "";
+  if (s.kind === "render" || s.kind === "renderAlt" || s.kind === "model") return t.speakerNotes || "";
   if (s.kind === "cta") {
-    return "Покажите проблемную операцию. Разберём, где теряется управление — и какой оснасткой вернуть ритм.";
+    return "Покажите проблемную операцию. Разберём, где теряется управление — и какой оснасткой вернуть ритм. Пишите: n.zaikovski@icloud.com";
   }
   return t.speakerNotes || "";
-}
-
-function speakerNotesHtml(t, s) {
-  const text = speakerForStep(t, s);
-  if (!text) return "";
-  return `<aside class="speaker-notes parallax-meta">
-    <div class="speaker-notes-label">Speaker · речь</div>
-    <p class="speaker-notes-text">${text}</p>
-  </aside>`;
 }
 
 function mediaOrPlaceholder(src, alt) {
@@ -1156,13 +1147,11 @@ function renderThought() {
   const total = String(steps.length).padStart(2, "0");
 
   let main = "";
-  const notes = speakerNotesHtml(t, s);
   if (s.kind === "text") {
     main = `<div class="slide-body">
       <p class="type-name parallax-meta">${t.shortTitle}</p>
       <h2 class="parallax-title">${titleHtml(s.title)}</h2>
       ${s.body ? `<div class="glass parallax-glass"><span>${s.body}</span></div>` : ""}
-      ${notes}
     </div>`;
   } else if (s.kind === "render") {
     const metrics = (t.metrics || []).slice(0,4).map(([a,b]) => `<div class="metric"><b>${a}</b><span>${b}</span></div>`).join("");
@@ -1177,7 +1166,6 @@ function renderThought() {
         <div class="callouts callouts-grid">${callouts}</div>
         <div class="metrics-bar">${metrics}</div>
       </div>
-      ${notes}
     </div>`;
   } else if (s.kind === "photo") {
     main = `<div class="slide-body wide render-screen">
@@ -1188,7 +1176,6 @@ function renderThought() {
         </div>
         <div class="card-media card-media-lg card-media-photo">${mediaOrPlaceholder(t.renderPhoto, t.photoCaption || t.title)}</div>
       </div>
-      ${notes}
     </div>`;
   } else if (s.kind === "renderAlt") {
     const metrics = (t.metrics || []).slice(0,4).map(([a,b]) => `<div class="metric"><b>${a}</b><span>${b}</span></div>`).join("");
@@ -1203,7 +1190,6 @@ function renderThought() {
         <div class="callouts callouts-grid">${callouts}</div>
         <div class="metrics-bar">${metrics}</div>
       </div>
-      ${notes}
     </div>`;
   } else if (s.kind === "model") {
     main = `<div class="slide-body wide model-screen">
@@ -1221,14 +1207,12 @@ function renderThought() {
           <span class="card-hint">Тяни мышью · крути модель</span>
         </div>
       </div>
-      ${notes}
     </div>`;
   } else if (s.kind === "cta") {
     main = `<div class="slide-body" style="display:flex;flex-direction:column;min-height:0;flex:1">
       <p class="type-name parallax-meta">end</p>
       <h2 class="parallax-title">Покажите<br><span class="acc">проблемную операцию.</span></h2>
       <div class="glass parallax-glass"><span>Разберём, где теряется управление — и какой оснасткой вернуть ритм.</span></div>
-      ${notes}
       <div class="cta-thought parallax-meta">
         <a class="btn btn-primary" href="mailto:n.zaikovski@icloud.com?subject=Проблемная%20операция%20—%20DIR-01">Показать операцию →</a>
         <button class="btn" type="button" id="findUsCtaBtn">Как нас найти</button>
@@ -1920,6 +1904,7 @@ function buildPdfPage(item, index, total) {
   const bg = s.kind === "text" || s.kind === "cta"
     ? resolveStepBackground(t, s.key)
     : (s.kind === "photo" ? t.renderPhoto : (s.kind === "renderAlt" ? t.renderCardAlt : t.renderCard));
+  const speaker = speakerForStep(t, s);
 
   let content = "";
   if (s.kind === "text") {
@@ -1942,12 +1927,20 @@ function buildPdfPage(item, index, total) {
       <div class="pdf-meta" style="margin-top:12px">${label}</div>`;
   }
 
-  return `<section class="pdf-page">
+  const speakerBlock = speaker
+    ? `<aside class="pdf-speaker">
+        <div class="pdf-speaker-label">Speaker · речь</div>
+        <p class="pdf-speaker-text">${speaker}</p>
+      </aside>`
+    : "";
+
+  return `<section class="pdf-page ${speaker ? "has-speaker" : ""}">
     ${bg ? `<div class="pdf-page-bg" style="background-image:url('${bg}')"></div><div class="pdf-page-veil"></div>` : ""}
     <div class="pdf-page-inner">
       <p class="pdf-kicker">Metalwork Pulse · DIR-01 · ${t.shortTitle}</p>
       <p class="pdf-meta">${n} / ${tot} · ${s.slug}</p>
       ${content}
+      ${speakerBlock}
     </div>
   </section>`;
 }
