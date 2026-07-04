@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" fill="none">
+  <rect width="800" height="500" fill="#050505"/>
+  <defs>
+    <pattern id="g2" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" stroke="rgba(242,240,234,0.05)" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="500" fill="url(#g2)"/>
+  <rect x="180" y="180" width="440" height="200" stroke="rgba(242,240,234,0.2)" stroke-width="2" fill="none"/>
+  <rect x="260" y="120" width="120" height="80" stroke="rgba(180,255,46,0.55)" stroke-width="2" fill="rgba(180,255,46,0.03)"/>
+  <rect x="420" y="120" width="120" height="80" stroke="rgba(180,255,46,0.55)" stroke-width="2" fill="rgba(180,255,46,0.03)"/>
+  <line x1="320" y1="200" x2="320" y2="280" stroke="rgba(180,255,46,0.5)" stroke-width="2"/>
+  <line x1="480" y1="200" x2="480" y2="280" stroke="rgba(180,255,46,0.5)" stroke-width="2"/>
+  <polygon points="300,320 500,320 480,380 320,380" stroke="rgba(242,240,234,0.25)" stroke-width="1.5" fill="none"/>
+</svg>

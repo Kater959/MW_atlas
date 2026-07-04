@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Atlas Metalwork — MW Heartbeat v0.3</title>
+  <style>
+    :root{
+      --bg:#050505;
+      --cream:#F2F0EA;
+      --muted:rgba(242,240,234,.48);
+      --dim:rgba(242,240,234,.22);
+      --grid:rgba(242,240,234,.035);
+      --lime:#B4FF2E;
+      --panel:#101010;
+      --line:rgba(242,240,234,.10);
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      background:
+        radial-gradient(circle at 52% 47%, rgba(242,240,234,.045), transparent 34%),
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+        var(--bg);
+      background-size:100% 100%, 56px 56px, 56px 56px, 100% 100%;
+      color:var(--cream);
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow:hidden;
+    }
+
+    .top{
+      position:fixed;
+      top:0;left:0;right:0;
+      height:48px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 28px;
+      border-bottom:1px solid rgba(242,240,234,.09);
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      font-size:11px;
+      letter-spacing:.34em;
+      color:var(--dim);
+      text-transform:uppercase;
+      background:rgba(5,5,5,.82);
+      backdrop-filter:blur(14px);
+      z-index:10;
+    }
+
+    .wrap{
+      height:100vh;
+      padding-top:48px;
+      display:grid;
+      grid-template-columns:minmax(350px, 34vw) 1fr;
+    }
+
+    .left{
+      padding:56px 42px 42px;
+      border-right:1px solid rgba(242,240,234,.09);
+      overflow:hidden;
+    }
+
+    .eyebrow{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      letter-spacing:.34em;
+      color:var(--dim);
+      text-transform:uppercase;
+      font-size:12px;
+      margin-bottom:34px;
+    }
+
+    .eyebrow strong{
+      display:block;
+      margin-top:8px;
+      color:var(--lime);
+      font-weight:800;
+    }
+
+    h1{
+      margin:0;
+      font-size:clamp(52px, 5.4vw, 96px);
+      line-height:.92;
+      letter-spacing:-.075em;
+      font-weight:900;
+    }
+
+    h1 span{color:var(--lime)}
+
+    .sub{
+      margin-top:34px;
+      max-width:510px;
+      color:var(--muted);
+      font-size:21px;
+      line-height:1.55;
+    }
+
+    .sub b{color:var(--cream);font-weight:500}
+
+    .canvas{
+      position:relative;
+      overflow:hidden;
+      min-width:0;
+    }
+
+    .core{
+      position:absolute;
+      left:7vw;
+      top:12vh;
+      width:420px;
+      padding:42px 42px 34px;
+      background:rgba(16,16,16,.78);
+      border:1px solid rgba(242,240,234,.10);
+      box-shadow:0 26px 80px rgba(0,0,0,.48);
+      z-index:4;
+    }
+
+    .core:before{
+      content:"";
+      position:absolute;
+      left:42px;
+      top:30px;
+      width:42px;
+      height:3px;
+      background:var(--lime);
+      box-shadow:0 0 18px rgba(180,255,46,.45);
+    }
+
+    .core h2{
+      margin:42px 0 18px;
+      font-size:46px;
+      line-height:1;
+      letter-spacing:-.07em;
+    }
+
+    .core p{
+      margin:0;
+      color:var(--muted);
+      font-size:18px;
+      line-height:1.55;
+    }
+
+    .heartbeat-stage{
+      position:absolute;
+      inset:0;
+      z-index:3;
+      pointer-events:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18vh 5vw 8vh;
+    }
+
+    .heartbeat-card{
+      width:min(88vw, 1080px);
+      transform:translateY(5vh);
+    }
+
+    .label-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:18px;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      letter-spacing:.28em;
+      text-transform:uppercase;
+      font-size:11px;
+      color:var(--dim);
+    }
+
+    .label-row span:first-child{color:var(--lime)}
+
+    svg{
+      width:100%;
+      height:auto;
+      overflow:visible;
+      display:block;
+    }
+
+    .datum{
+      fill:none;
+      stroke:rgba(242,240,234,.10);
+      stroke-width:1.1;
+    }
+
+    .track{
+      fill:none;
+      stroke:rgba(180,255,46,.16);
+      stroke-width:2;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+    }
+
+    .glow{
+      fill:none;
+      stroke:rgba(180,255,46,.30);
+      stroke-width:12;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      filter:blur(5px);
+      stroke-dasharray:1500;
+      stroke-dashoffset:1500;
+      animation:draw 3.8s linear infinite;
+    }
+
+    .pulse{
+      fill:none;
+      stroke:var(--lime);
+      stroke-width:4;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      filter:drop-shadow(0 0 10px rgba(180,255,46,.74));
+      stroke-dasharray:1500;
+      stroke-dashoffset:1500;
+      animation:draw 3.8s linear infinite;
+    }
+
+    @keyframes draw{
+      0%{stroke-dashoffset:1500;opacity:0}
+      8%{opacity:1}
+      82%{opacity:1}
+      100%{stroke-dashoffset:0;opacity:0}
+    }
+
+    .ghost-letter{
+      fill:none;
+      stroke:rgba(180,255,46,.085);
+      stroke-width:1.2;
+      font-family:Inter, ui-sans-serif, system-ui, sans-serif;
+      font-size:112px;
+      font-weight:900;
+      letter-spacing:-.08em;
+    }
+
+    .caption{
+      margin-top:22px;
+      max-width:920px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:40px;
+    }
+
+    .caption-main{
+      color:var(--cream);
+      font-size:34px;
+      line-height:1.05;
+      letter-spacing:-.055em;
+      font-weight:900;
+      text-transform:uppercase;
+    }
+
+    .caption-main span{color:var(--lime)}
+
+    .caption-sub{
+      max-width:420px;
+      color:var(--muted);
+      font-size:18px;
+      line-height:1.45;
+      padding-top:4px;
+    }
+
+    .caption-sub b{color:var(--cream);font-weight:500}
+
+    .modules-ghost{
+      position:absolute;
+      right:5vw;
+      bottom:9vh;
+      z-index:1;
+      opacity:.13;
+      display:flex;
+      gap:16px;
+      pointer-events:none;
+    }
+
+    .ghost-card{
+      width:230px;
+      height:104px;
+      border:1px solid rgba(242,240,234,.09);
+      background:rgba(16,16,16,.45);
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .glow,.pulse{animation:none;stroke-dashoffset:0;opacity:1}
+    }
+
+    @media (max-width:1050px){
+      .wrap{grid-template-columns:1fr}
+      .left{display:none}
+      .core{left:6vw;top:10vh;width:360px}
+      .heartbeat-card{width:88vw;transform:translateY(8vh)}
+      .caption{flex-direction:column;gap:14px}
+    }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div>ATLAS · MW HEARTBEAT CLEAN CANVAS</div>
+    <div>READABLE MW · v0.3</div>
+  </div>
+
+  <main class="wrap">
+    <aside class="left">
+      <div class="eyebrow">
+        Atlas Metalwork
+        <strong>Explore Mode</strong>
+      </div>
+      <h1>
+        ОТК НЕ<br>
+        ПРЕДОТВРАЩАЕТ<br>
+        БРАК.<br>
+        <span>ОН<br>ФИКСИРУЕТ<br>УБЫТКИ.</span>
+      </h1>
+      <p class="sub">
+        Брак рождается раньше — <b>в операции, которая оставила ошибке место.</b>
+      </p>
+    </aside>
+
+    <section class="canvas">
+      <article class="core">
+        <h2>METALWORK</h2>
+        <p>Мы не продаём железо. Мы проектируем физический запрет на ошибку.</p>
+      </article>
+
+      <div class="modules-ghost" aria-hidden="true">
+        <div class="ghost-card"></div>
+        <div class="ghost-card"></div>
+        <div class="ghost-card"></div>
+      </div>
+
+      <div class="heartbeat-stage">
+        <div class="heartbeat-card">
+          <div class="label-row">
+            <span>MW PROCESS LINE</span>
+            <span>continuous heartbeat · no dots · readable geometry</span>
+          </div>
+
+          <svg viewBox="0 0 1100 300" role="img" aria-label="MW heartbeat line">
+            <path class="datum" d="M 0 150 H 1100" />
+
+            <!-- subtle letter ghosts: подсказка, но не основная форма -->
+            <text class="ghost-letter" x="205" y="112">M</text>
+            <text class="ghost-letter" x="585" y="207">W</text>
+
+            <!--
+              Continuous MW heartbeat:
+              M = readable double peak around x 210-360.
+              W = corrected, no extra stick: four strokes only around x 590-760.
+              No circles.
+            -->
+            <path class="track" d="
+              M 0 150
+              H 175
+
+              L 210 150
+              L 240 58
+              L 285 230
+              L 330 58
+              L 365 150
+
+              H 550
+
+              L 590 150
+              L 625 220
+              L 660 150
+              L 695 220
+              L 730 150
+
+              H 820
+              L 850 150
+              L 880 36
+              L 912 264
+              L 946 150
+
+              H 1100" />
+
+            <path class="glow" d="
+              M 0 150
+              H 175
+
+              L 210 150
+              L 240 58
+              L 285 230
+              L 330 58
+              L 365 150
+
+              H 550
+
+              L 590 150
+              L 625 220
+              L 660 150
+              L 695 220
+              L 730 150
+
+              H 820
+              L 850 150
+              L 880 36
+              L 912 264
+              L 946 150
+
+              H 1100" />
+
+            <path class="pulse" d="
+              M 0 150
+              H 175
+
+              L 210 150
+              L 240 58
+              L 285 230
+              L 330 58
+              L 365 150
+
+              H 550
+
+              L 590 150
+              L 625 220
+              L 660 150
+              L 695 220
+              L 730 150
+
+              H 820
+              L 850 150
+              L 880 36
+              L 912 264
+              L 946 150
+
+              H 1100" />
+          </svg>
+
+          <div class="caption">
+            <div class="caption-main">
+              METALWORK<br>
+              <span>MW PULSE</span>
+            </div>
+            <div class="caption-sub">
+              Реанимация для ваших больных производственных вопросов:
+              <b>находим место, где операция теряет управление, и возвращаем процессу ритм.</b>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

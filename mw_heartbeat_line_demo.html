@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MW Heartbeat Line — Atlas Metalwork</title>
+  <style>
+    :root{
+      --bg:#050505;
+      --cream:#F2F0EA;
+      --muted:rgba(242,240,234,.46);
+      --dim:rgba(242,240,234,.20);
+      --grid:rgba(242,240,234,.035);
+      --lime:#B4FF2E;
+      --panel:#101010;
+      --line:rgba(242,240,234,.10);
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      background:
+        radial-gradient(circle at 52% 42%, rgba(242,240,234,.055), transparent 30%),
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+        var(--bg);
+      background-size:100% 100%, 52px 52px, 52px 52px, 100% 100%;
+      color:var(--cream);
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow:hidden;
+    }
+
+    .top{
+      position:fixed;
+      top:0;left:0;right:0;
+      height:48px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 28px;
+      border-bottom:1px solid var(--line);
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      font-size:11px;
+      letter-spacing:.34em;
+      color:var(--dim);
+      text-transform:uppercase;
+      background:rgba(5,5,5,.82);
+      backdrop-filter:blur(14px);
+    }
+
+    .stage{
+      height:100vh;
+      padding-top:48px;
+      display:grid;
+      grid-template-columns:38vw 1fr;
+    }
+
+    .left{
+      padding:56px 0 48px 44px;
+      border-right:1px solid var(--line);
+      overflow:hidden;
+    }
+
+    .eyebrow{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      letter-spacing:.35em;
+      color:var(--dim);
+      font-size:12px;
+      text-transform:uppercase;
+      margin-bottom:34px;
+    }
+
+    .eyebrow b{
+      display:block;
+      color:var(--lime);
+      margin-top:8px;
+      font-weight:800;
+    }
+
+    h1{
+      margin:0;
+      max-width:600px;
+      font-size:clamp(62px, 6.2vw, 112px);
+      line-height:.92;
+      letter-spacing:-.075em;
+      font-weight:900;
+    }
+
+    h1 span{color:var(--lime)}
+
+    .sub{
+      margin-top:38px;
+      max-width:520px;
+      color:var(--muted);
+      font-size:22px;
+      line-height:1.55;
+    }
+
+    .sub strong{color:var(--cream);font-weight:500}
+
+    .right{
+      position:relative;
+      padding:64px 54px;
+      overflow:hidden;
+    }
+
+    .core{
+      position:absolute;
+      left:7%;
+      top:30%;
+      width:430px;
+      padding:46px 44px 38px;
+      background:rgba(16,16,16,.94);
+      border:1px solid var(--line);
+      box-shadow:0 30px 90px rgba(0,0,0,.5);
+      z-index:5;
+    }
+
+    .core:before{
+      content:"";
+      position:absolute;
+      left:44px;
+      top:32px;
+      width:42px;
+      height:3px;
+      background:var(--lime);
+      box-shadow:0 0 18px rgba(180,255,46,.45);
+    }
+
+    .core h2{
+      margin:42px 0 20px;
+      font-size:46px;
+      line-height:1;
+      letter-spacing:-.07em;
+    }
+
+    .core p{
+      margin:0;
+      color:var(--muted);
+      font-size:18px;
+      line-height:1.55;
+    }
+
+    .core .act{
+      margin-top:38px;
+      color:var(--lime);
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      font-size:11px;
+      letter-spacing:.24em;
+      text-transform:uppercase;
+    }
+
+    .branch{
+      position:absolute;
+      right:8%;
+      top:18%;
+      width:320px;
+      display:flex;
+      flex-direction:column;
+      gap:20px;
+      z-index:6;
+    }
+
+    .card{
+      position:relative;
+      min-height:142px;
+      padding:26px 26px 22px;
+      background:rgba(16,16,16,.96);
+      border:1px solid var(--line);
+      box-shadow:0 20px 60px rgba(0,0,0,.45);
+    }
+
+    .card.active{
+      border-color:rgba(180,255,46,.58);
+      box-shadow:0 0 0 1px rgba(180,255,46,.12), 0 20px 80px rgba(180,255,46,.08);
+    }
+
+    .code{
+      color:var(--lime);
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      letter-spacing:.28em;
+      font-size:11px;
+      margin-bottom:22px;
+    }
+
+    .card h3{
+      margin:0 0 14px;
+      font-size:27px;
+      line-height:1.02;
+      letter-spacing:-.055em;
+      text-transform:uppercase;
+    }
+
+    .card p{
+      margin:0;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.45;
+    }
+
+    .heartbeat-layer{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:4;
+    }
+
+    .heartbeat-svg{
+      position:absolute;
+      left:calc(7% + 405px);
+      top:calc(30% + 76px);
+      width:clamp(520px, 41vw, 780px);
+      height:250px;
+      overflow:visible;
+    }
+
+    .track{
+      fill:none;
+      stroke:rgba(180,255,46,.16);
+      stroke-width:1.1;
+    }
+
+    .pulse{
+      fill:none;
+      stroke:var(--lime);
+      stroke-width:3;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      filter:drop-shadow(0 0 8px rgba(180,255,46,.65));
+      stroke-dasharray:1120;
+      stroke-dashoffset:1120;
+      animation:pulseDraw 3.2s linear infinite;
+    }
+
+    .pulse-hot{
+      fill:none;
+      stroke:rgba(180,255,46,.28);
+      stroke-width:8;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      filter:blur(3px);
+      stroke-dasharray:1120;
+      stroke-dashoffset:1120;
+      animation:pulseDraw 3.2s linear infinite;
+    }
+
+    @keyframes pulseDraw{
+      0%{stroke-dashoffset:1120;opacity:0}
+      9%{opacity:1}
+      72%{opacity:1}
+      100%{stroke-dashoffset:0;opacity:0}
+    }
+
+    .mw-label{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      font-size:10px;
+      letter-spacing:.28em;
+      fill:rgba(242,240,234,.25);
+      text-transform:uppercase;
+    }
+
+    .m-dot,.w-dot{
+      fill:var(--lime);
+      filter:drop-shadow(0 0 8px rgba(180,255,46,.65));
+      opacity:.95;
+    }
+
+    .caption{
+      position:absolute;
+      left:calc(7% + 435px);
+      top:calc(30% + 304px);
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      font-size:10px;
+      letter-spacing:.28em;
+      color:var(--dim);
+      text-transform:uppercase;
+      z-index:7;
+    }
+
+    .caption span{color:var(--lime)}
+
+    @media (prefers-reduced-motion: reduce){
+      .pulse,.pulse-hot{animation:none;stroke-dashoffset:0;opacity:1}
+    }
+
+    @media (max-width:1200px){
+      .stage{grid-template-columns:36vw 1fr}
+      h1{font-size:64px}
+      .core{width:370px}
+      .heartbeat-svg{width:520px}
+      .branch{right:4%;width:290px}
+    }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div>ATLAS · ENGINEERING COMMAND CANVAS</div>
+    <div>MW PROCESS LINE · v0.1</div>
+  </div>
+
+  <main class="stage">
+    <section class="left">
+      <div class="eyebrow">
+        Atlas Metalwork
+        <b>Explore Mode</b>
+      </div>
+      <h1>
+        ОТК НЕ<br>
+        ПРЕДОТВРАЩАЕТ<br>
+        БРАК.<br>
+        <span>ОН<br>ФИКСИРУЕТ<br>УБЫТКИ.</span>
+      </h1>
+      <p class="sub">
+        Брак рождается раньше — <strong>в операции, которая оставила ошибке место.</strong>
+      </p>
+    </section>
+
+    <section class="right">
+      <article class="core">
+        <h2>METALWORK</h2>
+        <p>Мы не продаём железо. Мы проектируем физический запрет на ошибку.</p>
+        <div class="act">EXPLORE SYSTEM →</div>
+      </article>
+
+      <div class="heartbeat-layer" aria-hidden="true">
+        <svg class="heartbeat-svg" viewBox="0 0 820 250">
+          <!--
+            Линия специально построена так, чтобы в ней читались M и W:
+            M = два острых подъёма/падения сразу после выхода из METALWORK.
+            W = двойная нижняя “яма” ближе к активной ветке.
+          -->
+          <path class="track" d="
+            M 0 96
+            H 68
+
+            L 92 96
+            L 112 42
+            L 136 146
+            L 160 42
+            L 184 96
+
+            H 310
+            L 332 96
+            L 350 66
+            L 370 126
+            L 390 66
+            L 410 126
+            L 432 96
+
+            H 560
+            L 586 96
+            L 606 18
+            L 628 176
+            L 650 96
+
+            H 820" />
+
+          <path class="pulse-hot" d="
+            M 0 96
+            H 68
+
+            L 92 96
+            L 112 42
+            L 136 146
+            L 160 42
+            L 184 96
+
+            H 310
+            L 332 96
+            L 350 66
+            L 370 126
+            L 390 66
+            L 410 126
+            L 432 96
+
+            H 560
+            L 586 96
+            L 606 18
+            L 628 176
+            L 650 96
+
+            H 820" />
+
+          <path class="pulse" d="
+            M 0 96
+            H 68
+
+            L 92 96
+            L 112 42
+            L 136 146
+            L 160 42
+            L 184 96
+
+            H 310
+            L 332 96
+            L 350 66
+            L 370 126
+            L 390 66
+            L 410 126
+            L 432 96
+
+            H 560
+            L 586 96
+            L 606 18
+            L 628 176
+            L 650 96
+
+            H 820" />
+
+          <circle class="m-dot" cx="112" cy="42" r="4"/>
+          <circle class="m-dot" cx="160" cy="42" r="4"/>
+          <circle class="w-dot" cx="370" cy="126" r="4"/>
+          <circle class="w-dot" cx="410" cy="126" r="4"/>
+
+          <text class="mw-label" x="95" y="28">M-PULSE</text>
+          <text class="mw-label" x="342" y="154">W-PULSE</text>
+        </svg>
+      </div>
+
+      <div class="caption"><span>PROCESS PULSE</span> · ACTIVE BRANCH · MW LINE</div>
+
+      <div class="branch">
+        <article class="card active">
+          <div class="code">DIR-01</div>
+          <h3>Станочная<br>зажимная<br>оснастка</h3>
+          <p>Если деталь можно поставить криво — рано или поздно её поставят криво.</p>
+        </article>
+
+        <article class="card">
+          <div class="code">DIR-02</div>
+          <h3>Сварочная<br>оснастка</h3>
+          <p>Геометрия изделия должна жить в стапеле, а не в глазомере.</p>
+        </article>
+
+        <article class="card">
+          <div class="code">DIR-03</div>
+          <h3>Кантователи</h3>
+          <p>Кран должен поднимать, а не изображать технологический процесс.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

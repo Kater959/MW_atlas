@@ -1,0 +1,165 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-bg-deck: #050505;
+  --color-bg-panel: #101010;
+  --color-bg-elevated: #151515;
+  --color-border-subtle: rgba(255, 255, 255, 0.1);
+  --color-border-edge: rgba(255, 255, 255, 0.14);
+  --color-text-primary: #f2f0ea;
+  --color-text-muted: rgba(242, 240, 234, 0.48);
+  --color-text-dim: rgba(242, 240, 234, 0.26);
+  --color-text-mono: rgba(242, 240, 234, 0.56);
+  --color-accent-steel: rgba(242, 240, 234, 0.32);
+  --color-accent-signal: #b4ff2e;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+:root {
+  --bg-deck: #050505;
+  --bg-panel: #101010;
+  --bg-elevated: #151515;
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-edge: rgba(255, 255, 255, 0.14);
+  --text-primary: #f2f0ea;
+  --text-muted: rgba(242, 240, 234, 0.48);
+  --text-dim: rgba(242, 240, 234, 0.26);
+  --text-mono: rgba(242, 240, 234, 0.56);
+  --accent-steel: rgba(242, 240, 234, 0.32);
+  --accent-signal: #b4ff2e;
+  --slide-padding-x: min(8vw, 120px);
+  --slide-padding-y: min(10vh, 80px);
+  --title-size: clamp(2rem, 5vw, 4.5rem);
+  --body-size: clamp(1.125rem, 2vw, 1.75rem);
+  --label-size: 0.75rem;
+  --atlas-hero: clamp(1.75rem, 3.2vw, 3.25rem);
+  --atlas-sub: clamp(1rem, 1.4vw, 1.25rem);
+  --atlas-editorial-hero: clamp(2.625rem, 4.1vw, 4.5rem);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg-deck);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.engineering-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 80px 80px;
+}
+
+.snap-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Left editorial — ОТК hero typography */
+.atlas-manifesto {
+  overflow-x: visible;
+  overflow-y: hidden;
+}
+
+.atlas-manifesto-scroll {
+  overflow-x: visible;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.atlas-editorial-hero {
+  font-size: var(--atlas-editorial-hero);
+  line-height: 0.96;
+  letter-spacing: -0.06em;
+  word-break: normal;
+  hyphens: none;
+  overflow: visible;
+  max-width: 100%;
+  text-wrap: balance;
+}
+
+@media (min-width: 1280px) and (max-width: 1500px) {
+  .atlas-editorial-hero {
+    font-size: clamp(2.375rem, 3.55vw, 3.875rem);
+    line-height: 0.94;
+  }
+}
+
+@media (max-height: 820px) {
+  .atlas-manifesto-compact .atlas-manifesto-pulse-block {
+    margin-top: 1.5rem;
+  }
+
+  .atlas-manifesto-compact .atlas-editorial-hero-wrap {
+    margin-top: 2rem;
+  }
+
+  .atlas-manifesto-compact .atlas-editorial-subline {
+    margin-top: 1.25rem;
+  }
+}
+
+/* Pulse tree — vertical diagnostic canvas */
+.pulse-tree {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.mw-pulse-line-active {
+  box-shadow: 0 0 12px rgba(180, 255, 46, 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mw-pulse-line-active {
+    box-shadow: none;
+  }
+}
+
+.mw-heartbeat-path {
+  stroke-dasharray: 1500;
+  stroke-dashoffset: 1500;
+  animation: mw-heartbeat-draw 5s ease-in-out infinite;
+}
+
+@keyframes mw-heartbeat-draw {
+  0% {
+    stroke-dashoffset: 1500;
+  }
+  45% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mw-heartbeat-path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}

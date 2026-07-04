@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Atlas Metalwork — Canvas Direction Mockup</title>
+  <style>
+    :root {
+      --bg: #050505;
+      --panel: #101010;
+      --panel-2: #151515;
+      --text: #F2F0EA;
+      --muted: rgba(242,240,234,.52);
+      --dim: rgba(242,240,234,.25);
+      --line: rgba(242,240,234,.10);
+      --line-2: rgba(242,240,234,.06);
+      --lime: #B4FF2E;
+      --lime-soft: rgba(180,255,46,.18);
+      --danger: #ff3b30;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 52% 40%, rgba(255,255,255,.05), transparent 28%),
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px),
+        var(--bg);
+      background-size: 100% 100%, 48px 48px, 48px 48px, 100% 100%;
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow: hidden;
+    }
+
+    .app {
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 390px minmax(660px, 1fr) 350px;
+      border-top: 1px solid var(--line);
+    }
+
+    .topline {
+      position: fixed;
+      z-index: 30;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 46px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(5,5,5,.78);
+      backdrop-filter: blur(14px);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      letter-spacing: .34em;
+      font-size: 11px;
+      color: var(--dim);
+      text-transform: uppercase;
+    }
+
+    .left {
+      padding: 94px 40px 34px;
+      border-right: 1px solid var(--line);
+      min-width: 0;
+    }
+
+    .eyebrow {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      letter-spacing: .34em;
+      text-transform: uppercase;
+      color: var(--dim);
+      font-size: 12px;
+      line-height: 1.8;
+      margin-bottom: 34px;
+    }
+
+    .eyebrow strong {
+      display: block;
+      color: var(--lime);
+      margin-top: 6px;
+      font-weight: 700;
+    }
+
+    .hero {
+      font-size: clamp(48px, 5vw, 76px);
+      line-height: .94;
+      letter-spacing: -.07em;
+      font-weight: 800;
+      margin: 0 0 34px;
+    }
+
+    .hero .lime { color: var(--lime); }
+
+    .lead {
+      color: var(--muted);
+      font-size: 20px;
+      line-height: 1.55;
+      max-width: 330px;
+    }
+
+    .lead strong { color: var(--text); font-weight: 500; }
+
+    .hint {
+      position: absolute;
+      bottom: 28px;
+      left: 36px;
+      color: var(--dim);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 10px;
+      letter-spacing: .26em;
+      text-transform: uppercase;
+    }
+
+    .canvas {
+      position: relative;
+      padding: 88px 38px 32px;
+      overflow: hidden;
+    }
+
+    .board {
+      position: relative;
+      height: 100%;
+      min-height: 620px;
+    }
+
+    .core {
+      position: absolute;
+      left: 5%;
+      top: 22%;
+      width: 430px;
+      min-height: 240px;
+      padding: 48px 44px 38px;
+      background: rgba(16,16,16,.94);
+      border: 1px solid var(--line);
+      box-shadow: 0 30px 90px rgba(0,0,0,.45);
+    }
+
+    .core:before,
+    .module:before,
+    .dossier:before {
+      content: "";
+      position: absolute;
+      left: 36px;
+      top: 34px;
+      width: 36px;
+      height: 3px;
+      background: var(--lime);
+      box-shadow: 0 0 22px var(--lime-soft);
+    }
+
+    .core h2 {
+      margin: 34px 0 20px;
+      font-size: 44px;
+      letter-spacing: -.07em;
+      line-height: 1;
+    }
+
+    .core p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.6;
+      max-width: 330px;
+    }
+
+    .core .action {
+      margin-top: 40px;
+      color: var(--lime);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      letter-spacing: .22em;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .pulse-track {
+      position: absolute;
+      left: calc(5% + 430px);
+      top: calc(22% + 120px);
+      width: 620px;
+      height: 86px;
+      pointer-events: none;
+      opacity: .9;
+    }
+
+    .pulse-track svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .pulse-bg {
+      stroke: rgba(180,255,46,.16);
+      stroke-width: 1;
+      fill: none;
+    }
+
+    .pulse-line {
+      stroke: var(--lime);
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 9px rgba(180,255,46,.42));
+      stroke-dasharray: 900;
+      stroke-dashoffset: 900;
+      animation: drawPulse 2.8s linear infinite;
+    }
+
+    .pulse-letter {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 900;
+      fill: var(--lime);
+      font-size: 17px;
+      letter-spacing: .1em;
+      filter: drop-shadow(0 0 9px rgba(180,255,46,.5));
+    }
+
+    @keyframes drawPulse {
+      0% { stroke-dashoffset: 900; opacity: 0; }
+      8% { opacity: 1; }
+      70% { opacity: 1; }
+      100% { stroke-dashoffset: 0; opacity: 0; }
+    }
+
+    .tree {
+      position: absolute;
+      left: calc(5% + 500px);
+      top: 15%;
+      width: 410px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .module {
+      position: relative;
+      min-height: 136px;
+      padding: 24px 24px 22px;
+      background: rgba(16,16,16,.96);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 44px rgba(0,0,0,.35);
+    }
+
+    .module:before {
+      left: 24px;
+      top: 24px;
+      width: 20px;
+      height: 2px;
+    }
+
+    .module .code {
+      color: var(--lime);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      letter-spacing: .28em;
+      font-size: 11px;
+      margin-bottom: 22px;
+    }
+
+    .module h3 {
+      margin: 0 0 14px;
+      font-size: 24px;
+      line-height: 1.05;
+      letter-spacing: -.045em;
+      text-transform: uppercase;
+    }
+
+    .module p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .module .arrow {
+      position: absolute;
+      right: 24px;
+      bottom: 20px;
+      color: var(--dim);
+      font-size: 22px;
+    }
+
+    .module.active {
+      border-color: rgba(180,255,46,.48);
+      box-shadow:
+        0 0 0 1px rgba(180,255,46,.08),
+        0 25px 80px rgba(180,255,46,.06);
+    }
+
+    .module.active .arrow { color: var(--lime); }
+
+    .branch-line {
+      position: absolute;
+      left: calc(5% + 430px);
+      top: calc(22% + 120px);
+      width: 95px;
+      height: 1px;
+      background: var(--lime);
+      box-shadow: 0 0 18px var(--lime-soft);
+    }
+
+    .vertical-spine {
+      position: absolute;
+      left: calc(5% + 500px - 32px);
+      top: 17%;
+      width: 1px;
+      height: 475px;
+      background: linear-gradient(to bottom, transparent, rgba(180,255,46,.35), transparent);
+    }
+
+    .dossier {
+      position: relative;
+      margin-top: 46px;
+      padding: 44px 34px 32px;
+      background: rgba(16,16,16,.98);
+      border-left: 1px solid var(--line);
+      height: calc(100vh - 46px);
+      overflow: auto;
+    }
+
+    .dossier:before {
+      left: 34px;
+      top: 144px;
+      width: 24px;
+      height: 2px;
+    }
+
+    .close {
+      position: absolute;
+      right: 26px;
+      top: 34px;
+      color: var(--dim);
+      font-size: 24px;
+    }
+
+    .dossier h2 {
+      margin: 0 0 36px;
+      max-width: 260px;
+      font-size: 28px;
+      line-height: 1.16;
+      letter-spacing: -.045em;
+      text-transform: uppercase;
+    }
+
+    .dossier .quote {
+      margin: 0 0 38px;
+      padding-left: 28px;
+      color: var(--text);
+      font-size: 22px;
+      line-height: 1.32;
+      position: relative;
+    }
+
+    .dossier .quote:before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: .55em;
+      width: 16px;
+      height: 2px;
+      background: var(--lime);
+    }
+
+    .section-label {
+      margin: 34px 0 15px;
+      color: var(--dim);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      letter-spacing: .28em;
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .dossier p {
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    .cta {
+      margin-top: 34px;
+      display: inline-flex;
+      align-items: center;
+      gap: 18px;
+      padding: 18px 22px;
+      background: var(--lime);
+      color: #050505;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: -.01em;
+      text-decoration: none;
+    }
+
+    .controls {
+      position: absolute;
+      left: 24px;
+      bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--line);
+      background: rgba(16,16,16,.7);
+    }
+
+    .controls button {
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: transparent;
+      color: var(--text);
+      font-size: 24px;
+    }
+
+    .controls button:last-child { border-bottom: 0; }
+
+    @media (max-width: 1280px) {
+      .app { grid-template-columns: 340px 1fr 320px; }
+      .hero { font-size: 54px; }
+      .core { width: 370px; }
+      .tree { left: calc(5% + 420px); width: 350px; }
+      .pulse-track { width: 480px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topline">
+    <div>ATLAS · ENGINEERING COMMAND CANVAS</div>
+    <div>v0.1 · SNAPDECK STYLE</div>
+  </div>
+
+  <main class="app">
+    <aside class="left">
+      <div class="eyebrow">
+        ATLAS METALWORK
+        <strong>EXPLORE MODE</strong>
+      </div>
+
+      <h1 class="hero">
+        ОТК НЕ<br>
+        ПРЕДОТВРАЩАЕТ<br>
+        БРАК.<br>
+        <span class="lime">ОН<br>ФИКСИРУЕТ<br>УБЫТКИ.</span>
+      </h1>
+
+      <p class="lead">
+        Брак рождается раньше — <strong>в операции, которая оставила ошибке место.</strong>
+      </p>
+
+      <div class="hint">PAN · ZOOM · CLICK MODULE</div>
+    </aside>
+
+    <section class="canvas">
+      <div class="board">
+        <div class="core">
+          <h2>METALWORK</h2>
+          <p>Мы не продаём железо. Мы проектируем физический запрет на ошибку.</p>
+          <div class="action">EXPLORE SYSTEM →</div>
+        </div>
+
+        <div class="branch-line"></div>
+        <div class="vertical-spine"></div>
+
+        <div class="pulse-track" aria-hidden="true">
+          <svg viewBox="0 0 620 86">
+            <path class="pulse-bg" d="M0 43 H74 L88 43 L102 15 L128 70 L156 43 H228 L246 43 L260 20 L286 65 L314 43 H410 L430 43 L448 12 L476 74 L506 43 H620" />
+            <path class="pulse-line" d="M0 43 H74 L88 43 L102 15 L128 70 L156 43 H228 L246 43 L260 20 L286 65 L314 43 H410 L430 43 L448 12 L476 74 L506 43 H620" />
+            <text class="pulse-letter" x="95" y="13">M</text>
+            <text class="pulse-letter" x="441" y="13">W</text>
+          </svg>
+        </div>
+
+        <div class="tree">
+          <article class="module active">
+            <div class="code">DIR-01</div>
+            <h3>Станочная<br>зажимная<br>оснастка</h3>
+            <p>Если деталь можно поставить криво — её поставят криво.</p>
+            <div class="arrow">→</div>
+          </article>
+
+          <article class="module">
+            <div class="code">DIR-02</div>
+            <h3>Сварочная<br>оснастка</h3>
+            <p>Геометрия изделия должна жить в стапеле, а не в глазомере.</p>
+            <div class="arrow">→</div>
+          </article>
+
+          <article class="module">
+            <div class="code">DIR-03</div>
+            <h3>Кантователи</h3>
+            <p>Кран должен поднимать, а не изображать технологический процесс.</p>
+            <div class="arrow">→</div>
+          </article>
+
+          <article class="module">
+            <div class="code">DIR-04</div>
+            <h3>Агрегатные<br>станки</h3>
+            <p>Повторяемую операцию пора превращать в отдельную машину.</p>
+            <div class="arrow">→</div>
+          </article>
+        </div>
+
+        <div class="controls">
+          <button>+</button>
+          <button>−</button>
+          <button>⌖</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="dossier">
+      <div class="close">×</div>
+      <h2>Станочная зажимная оснастка</h2>
+
+      <p class="quote">
+        Если деталь физически можно поставить криво — рано или поздно её поставят криво.
+      </p>
+
+      <div class="section-label">Что решает</div>
+      <p>
+        Базирование, упор, зажим, контроль положения и повторяемость партии.
+        Оснастка убирает из операции лишнюю свободу.
+      </p>
+
+      <div class="section-label">Линия жизни процесса</div>
+      <p>
+        Пульс Metalwork показывает не декор, а идею: процесс должен быть живым,
+        но управляемым. Ошибка не должна проходить дальше по системе.
+      </p>
+
+      <a class="cta" href="#">Показать проблемную операцию →</a>
+    </aside>
+  </main>
+</body>
+</html>
